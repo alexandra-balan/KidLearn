@@ -1,0 +1,28 @@
+version: '3.2'
+
+services:
+  fpm:
+    build:
+      context: .
+      dockerfile: infrastructure/fpm/dockerfile
+    image: softia/internship:fpm
+    volumes:
+      - ./:/var/www/html
+  web:
+    build:
+      context: .
+      dockerfile: infrastructure/web/dockerfile
+    image: softia/internship:web
+    volumes:
+      - ./public:/var/www/html/public
+    ports:
+      - "80:80"
+  db:
+    image: postgres:11.1
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: internship_db
+      POSTGRES_USER: internship_db_user
+      POSTGRES_PASSWORD: wEKvDWDBpeYS9HKY
+

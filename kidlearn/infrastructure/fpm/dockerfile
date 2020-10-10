@@ -1,0 +1,44 @@
+FROM php:7.3-fpm-alpine 
+#
+# Install PHP extensions and their dependencies..
+#
+RUN apk update && \
+    apk add postgresql-dev && \
+    docker-php-ext-install pcntl pgsql pdo_pgsql bcmath
+
+#
+# Install opcache, set sensible defaults, and configure with an environment
+# variable.  Enable it on your own projects with `PHP_OPCACHE_ENABLE=1`.
+#
+RUN docker-php-ext-install opcache &&\
+        { \
+        echo 'opcache.enable=${PHP_OPCACHE_ENABLE}'; \
+        echo 'opcache.memory_consumption=128'; \
+        echo 'opcache.interned_strings_buffer=8'; \
+        echo 'opcache.max_accelerated_files=4000'; \
+        echo 'opcache.validate_timestamps=0'; \
+        echo 'opcache.fast_shutdown=1'; \
+        echo 'opcache.enable_cli=1'; \
+    } > /usr/local/etc/php/conf.d/opcache-recommended.ini;
+
+#
+# Install project related dependencies
+#
+RUN apk update && \
+    apk add --update nodejs nodejs-npm;
+
+WORKDIR /var/www/html
+#COPY package.json ./
+
+#RUN npm install && \
+#    npm install -g gulp && \
+#    npm install gulp && \
+#    npm cache clean --force
+
+RUN curl -sS https://getcomposer.org/installer | \
+    php -- --install-dir=/usr/bin/ --filename=composer
+
+COPY --chown=www-data:www-data . /var/www/html
+RUN composer install --no-interaction --classmap-authoritative --no-dev --prefer-dist
+RUN chown -R www-data:www-data storage/logs/
+#RUN gulp --production
